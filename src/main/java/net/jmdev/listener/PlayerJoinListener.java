@@ -49,6 +49,8 @@ public class PlayerJoinListener implements Listener {
 
         if (constants.lobbyWorldFolderPath.split("/")[1].equalsIgnoreCase(e.getPlayer().getWorld().getName()) && constants.playersToStart >= Bukkit.getOnlinePlayers().size()) {
 
+            Bukkit.broadcastMessage(TextUtils.formatText("&aPlayer " + e.getPlayer().getDisplayName() + " &ahas joined! (" + Bukkit.getOnlinePlayers().size() + "/" + constants.playerLimit + ")"));
+
             if (constants.lobbyCountDown > 0) {
 
                 GameManager.start(() -> {
@@ -95,6 +97,7 @@ public class PlayerJoinListener implements Listener {
         if (constants.lobbyWorldFolderPath.split("/")[1].equalsIgnoreCase(e.getPlayer().getWorld().getName())) {
 
             isEnoughPlayers = e.getPlayer().getWorld().getPlayers().size() >= constants.playersToStart;
+            Bukkit.broadcastMessage(TextUtils.formatText("&cPlayer " + e.getPlayer().getDisplayName() + " &ahas left! (" + (Bukkit.getOnlinePlayers().size() - 1) + "/" + constants.playerLimit + ")"));
 
         }
 
