@@ -1,0 +1,9 @@
+net\jmdev\listener\PlayerJoinListener.class
+net\jmdev\core\GameManager.class
+net\jmdev\util\TextUtils.class
+net\jmdev\util\Title.class
+net\jmdev\CaptureTheWool.class
+net\jmdev\core\LobbyManager.class
+net\jmdev\core\IGameStart.class
+net\jmdev\util\Constants.class
+net\jmdev\database\CoinsDatabase.class
