@@ -7,10 +7,11 @@ import net.jmdev.util.TextUtils;
 import net.jmdev.util.Title;
 
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.scheduler.BukkitTask;
 
 /*************************************************************************
  *
@@ -34,6 +35,8 @@ public class PlayerJoinListener implements Listener {
 
     private CaptureTheWool plugin;
     private Constants constants = new Constants(plugin);
+    private boolean isEnoughPlayers = false;
+    private BukkitTask task;
 
     public PlayerJoinListener(CaptureTheWool plugin) {
 
@@ -44,7 +47,9 @@ public class PlayerJoinListener implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent e) {
 
-        if (constants.playersToStart >= Bukkit.getOnlinePlayers().size()) {
+        if (constants.lobbyWorldFolderPath.split("/")[1].equalsIgnoreCase(e.getPlayer().getWorld().getName()) && constants.playersToStart >= Bukkit.getOnlinePlayers().size()) {
+
+            Bukkit.broadcastMessage(TextUtils.formatText("&aPlayer " + e.getPlayer().getDisplayName() + " &ahas joined! (" + Bukkit.getOnlinePlayers().size() + "/" + constants.playerLimit + ")"));
 
             if (constants.lobbyCountDown > 0) {
 
@@ -54,12 +59,23 @@ public class PlayerJoinListener implements Listener {
 
                         final int j = i;
 
-                        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                        task = plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
 
-                            for (Player p : Bukkit.getOnlinePlayers())
-                                new Title(TextUtils.formatText("&0"), TextUtils.formatText("&aGame starting in: " + (constants.lobbyCountDown - j)), 0, 1, 0).send(p);
+                            new Title(TextUtils.formatText("&0"), TextUtils.formatText("&aGame starting in: " + (constants.lobbyCountDown - j)), 0, 1, 0).broadcast();
+
+                            if (!isEnoughPlayers && task != null) {
+
+                                int playersNeeded = constants.playersToStart - Bukkit.getOnlinePlayers().size();
+
+                                Bukkit.broadcastMessage(TextUtils.formatText("&cCountdown cancelled! Waiting for &7" + ((playersNeeded == 1 ? "1 &cmore player." : playersNeeded + " &cmore players."))));
+                                task.cancel();
+
+                            }
 
                         }, i * 20);
+
+                        if ((constants.lobbyCountDown - j) == 1)
+                            Bukkit.broadcastMessage("Starting...");
 
                     }
 
@@ -70,6 +86,18 @@ public class PlayerJoinListener implements Listener {
                 //just start the game already!
 
             }
+
+        }
+
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent e) {
+
+        if (constants.lobbyWorldFolderPath.split("/")[1].equalsIgnoreCase(e.getPlayer().getWorld().getName())) {
+
+            isEnoughPlayers = e.getPlayer().getWorld().getPlayers().size() >= constants.playersToStart;
+            Bukkit.broadcastMessage(TextUtils.formatText("&cPlayer " + e.getPlayer().getDisplayName() + " &ahas left! (" + (Bukkit.getOnlinePlayers().size() - 1) + "/" + constants.playerLimit + ")"));
 
         }
 
