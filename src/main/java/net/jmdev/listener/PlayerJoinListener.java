@@ -34,13 +34,14 @@ import org.bukkit.scheduler.BukkitTask;
 public class PlayerJoinListener implements Listener {
 
     private CaptureTheWool plugin;
-    private Constants constants = new Constants(plugin);
+    private Constants constants;
     private boolean isEnoughPlayers = false;
     private BukkitTask task;
 
     public PlayerJoinListener(CaptureTheWool plugin) {
 
         this.plugin = plugin;
+        constants = new Constants(plugin, plugin.getConfig());
 
     }
 

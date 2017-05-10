@@ -2,6 +2,7 @@ package net.jmdev.util;
 
 import net.jmdev.CaptureTheWool;
 
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.util.List;
@@ -26,52 +27,88 @@ import java.util.List;
  */
 public class Constants {
 
-    private static YamlConfiguration config;
     //WORLD INFO
-    public final String gameWorldFolderPath = config.getString("gameWorldFolderPath");
-    public final String redWoolLocation = config.getString("redWoolLocation");
-    public final String blueWoolLocation = config.getString("blueWoolLocation");
+    public final String gameWorldFolderPath;
+    public final String redWoolLocation;
+    public final String blueWoolLocation;
 
     //LOBBY
-    public final String lobbyWorldFolderPath = config.getString("lobbyWorldFolderPath");
-    public final int lobbyCountDown = config.getInt("lobbyCountDown");
+    public final String lobbyWorldFolderPath;
+    public final int lobbyCountDown;
 
     //TEAMS
-    public final List<String> redSpawnLocations = config.getStringList("redSpawnLocations");
-    public final List<String> blueSpawnLocations = config.getStringList("blueSpawnLocations");
+    public final List<String> redSpawnLocations;
+    public final List<String> blueSpawnLocations;
 
     //PLAYER REQUIREMENTS
-    public final int playersToStart = config.getInt("playersToStart");
-    public final int playerLimit = config.getInt("playerLimit");
+    public final int playersToStart;
+    public final int playerLimit;
 
     //COINS
-    public final int coinsPerKill = config.getInt("coinsPerKill");
-    public final int coinsPerCoarseDirt = config.getInt("coinsPerCoarseDirt");
+    public final int coinsPerKill;
+    public final int coinsPerCoarseDirt;
 
     //CHANCES
-    public final int coinsPercentCoarseDirt = config.getInt("coinsPercentCoarseDirt");
+    public final int coinsPercentCoarseDirt;
 
     //PRICES
-    public final List<String> shopItems = config.getStringList("shopItems");
+    public final List<String> shopItems;
 
     //GAME RULES
-    public final int woolLimit = config.getInt("woolLimit");
-    public final int deathFreezeTime = config.getInt("deathFreezeTime");
+    public final int woolLimit;
+    public final int deathFreezeTime;
 
     //MESSAGES
-    public final String woolTaken = config.getString("woolTaken");
-    public final String woolDropped = config.getString("woolDropped");
-    public final String woolCaptured = config.getString("woolCaptured");
+    public final String woolTaken;
+    public final String woolDropped;
+    public final String woolCaptured;
 
     //SCOREBOARD
-    public List<String> scoreboard = config.getStringList("scoreboard");
+    public List<String> scoreboard;
 
     private CaptureTheWool plugin;
 
-    public Constants(CaptureTheWool plugin) {
+    public Constants(CaptureTheWool plugin, FileConfiguration config) {
 
         this.plugin = plugin;
-        this.config = (YamlConfiguration) plugin.getConfig();
+        config = (YamlConfiguration) plugin.getConfig();
+
+        //WORLD INFO
+        gameWorldFolderPath = config.getString("gameWorldFolderPath");
+        redWoolLocation = config.getString("redWoolLocation");
+        blueWoolLocation = config.getString("blueWoolLocation");
+
+        //LOBBY
+        lobbyWorldFolderPath = config.getString("lobbyWorldFolderPath");
+        lobbyCountDown = config.getInt("lobbyCountDown");
+
+        //TEAMS
+        redSpawnLocations = config.getStringList("redSpawnLocations");
+        blueSpawnLocations = config.getStringList("blueSpawnLocations");
+
+        //PLAYER REQUIREMENTS
+        playersToStart = config.getInt("playersToStart");
+        playerLimit = config.getInt("playerLimit");
+
+        //COINS
+        coinsPerKill = config.getInt("coinsPerKill");
+        coinsPerCoarseDirt = config.getInt("coinsPerCoarseDirt");
+
+        //CHANCES
+        coinsPercentCoarseDirt = config.getInt("coinsPercentCoarseDirt");
+
+        //PRICES
+        shopItems = config.getStringList("shopItems");
+
+        //GAME RULES
+        woolLimit = config.getInt("woolLimit");
+        deathFreezeTime = config.getInt("deathFreezeTime");
+
+        //MESSAGES
+        woolTaken = config.getString("woolTaken");
+        woolDropped = config.getString("woolDropped");
+        woolCaptured = config.getString("woolCaptured");
+
 
     }
 

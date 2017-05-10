@@ -1,6 +1,7 @@
 package net.jmdev;
 
 import net.jmdev.database.CoinsDatabase;
+import net.jmdev.listener.PlayerJoinListener;
 
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -30,12 +31,16 @@ public class CaptureTheWool extends JavaPlugin {
     @Override
     public void onEnable() {
 
-        new CoinsDatabase().reload();
+        boolean configNull = getConfig() == null;
 
-        if (getConfig() == null)
+        if (configNull)
             saveDefaultConfig();
         else
             reloadConfig();
+
+        new CoinsDatabase().reload();
+
+        getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
 
     }
 
