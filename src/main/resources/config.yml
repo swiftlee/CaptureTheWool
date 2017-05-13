@@ -1,59 +1,49 @@
-###################################################################################
-#                                                                                 #
-#  ________________________  ________________________ _                        _  #
-# |                        |             |             \          /\          /   #
-# |                                      |              \        /  \        /    #
-# |                                      |               \      /    \      /     #
-# |                                      |                \    /      \    /      #
-# |                                      |                 \  /        \  /       #
-# |________________________              |                  \/          \/        #
-#                                                                                 #
-#                                 CREATED BY JON                                  #
-###################################################################################
+#BUNGEEMODE
+bungeeMode: true
 
-#WORLD INFO
-gameWorldFolderPath: "server/myWorldFolder"
-redWoolLocation: ""
-blueWoolLocation: ""
+#GAME WORLD INFO
+game:
+ worldName: "gameWorld"
+ worldFolderPath: "server/gameWorld"
+ redWoolLocation: ""
+ blueWoolLocation: ""
 
 #LOBBY
-lobbyWorldFolderPath: "server/lobbyWorldFolder"
-lobbyCountdown: 10
+lobby:
+ worldName: "lobby"
+ worldFolderPath: "server/lobby"
+ spawnLocation: "lobby,x,y,z,y,p"
+ countdown: 10
 
 #TEAMS
-redSpawnLocations:
- - ""
+spawnLocations:
+ redTeam:
+   - "gameWorld,x,y,z,y,p"
+ blueTeam:
+   - "gameWorld,x,y,z,y,p"
 
-blueSpawnLocations:
- - ""
-
-#PLAYER REQUIREMENTS
-playersToStart: 2
-playerLimit: 4
+#PLAYER REQUIREMENTS (toStart = players needed to start | limit = maxPlayers allowed.)
+players:
+ toStart: 2
+ limit: 4
 
 #COINS
-coinsPerKill: 5
-coinsPerCoarseDirt: 5
+coins:
+ perKill: 5
+ perCoarseDirt: 5
 
-#CHANCES - (PERCENTAGE)
-coinsPercentCoarseDirt: 25
+#CHANCES - (%PERCENTAGE%)
+chances:
+ coinsCoarseDirt: 25
 
-#PRICES (NO SPACES. ADD : FOR PRICE AFTER ITEM, DEFAULT PRICE WILL BE 100 IF NOT SPECIFIED)
-shopItems:
- - "barrier:*:0"
- - "stone_spade:100:2"
- - "iron_spade:250:4"
- - "diamond_spade:500:6"
- - "barrier:*:0"
+#PRICES (ITEM:PRICE:INV_SLOT)
+shopItems: ["barrier:*:0", "stone_spade:100:2", "iron_spade:250:4", "diamond_spade:500:6", "barrier:*:0"]
 
 #GAME RULES (ALL TIMES ARE IN SECONDS)
-woolLimit: 2
-deathFreezeTime: 5
+gameRules: {woolLimit: 2, deathFreezeTime: 5}
 
 #MESSAGES
-woolTaken: "{teamColor} wool has been taken!"
-woolDropped: "{woolColor}"
-woolCaptured: "{woolColor} has been captured!"
+messages: {woolTaken: "{teamColor} wool has been taken!", woolDropped: "{woolColor}", woolCaptured: "{woolColor} has been captured!"}
 
 #SCOREBOARD
 scoreboard:

@@ -3,3 +3,8 @@ main: net.jmdev.CaptureTheWool
 version: 1.0
 description: Single-server Capture The Wool Minigame.
 author: SwiftLee
+
+permissions:
+ ctw.bungeemode:
+  description: "Players with permission can join the server when BungeeMode is ON."
+  default: op

@@ -1,6 +1,9 @@
 package net.jmdev.util;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.World;
 
 /*************************************************************************
  *
@@ -25,6 +28,19 @@ public class TextUtils {
     public static String formatText(String txt) {
 
         return ChatColor.translateAlternateColorCodes('&', txt);
+
+    }
+
+    public static Location parseLocation(String loc) {
+
+        World world = Bukkit.getWorld(loc.split(",")[0]);
+        double x = Double.valueOf(loc.split(",")[1]);
+        double y = Double.valueOf(loc.split(",")[2]);
+        double z = Double.valueOf(loc.split(",")[3]);
+        float yaw = Float.valueOf(loc.split(",")[4]);
+        float pitch = Float.valueOf(loc.split(",")[5]);
+
+        return new Location(world, x, y, z, yaw, pitch);
 
     }
 

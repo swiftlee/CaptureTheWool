@@ -1,16 +1,21 @@
 package net.jmdev.listener;
 
 import net.jmdev.CaptureTheWool;
+import net.jmdev.core.BungeeMode;
 import net.jmdev.core.GameManager;
-import net.jmdev.util.Constants;
+import net.jmdev.core.GameState;
 import net.jmdev.util.TextUtils;
 import net.jmdev.util.Title;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.material.MaterialData;
 import org.bukkit.scheduler.BukkitTask;
 
 /*************************************************************************
@@ -34,59 +39,113 @@ import org.bukkit.scheduler.BukkitTask;
 public class PlayerJoinListener implements Listener {
 
     private CaptureTheWool plugin;
-    private Constants constants;
-    private boolean isEnoughPlayers = false;
+    private FileConfiguration config;
+    private boolean isEnoughPlayers = true;
     private BukkitTask task;
+    private int playersNeeded;
 
     public PlayerJoinListener(CaptureTheWool plugin) {
 
         this.plugin = plugin;
-        constants = new Constants(plugin, plugin.getConfig());
+        config = plugin.getConfig();
 
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent e) {
 
-        if (constants.lobbyWorldFolderPath.split("/")[1].equalsIgnoreCase(e.getPlayer().getWorld().getName()) && constants.playersToStart >= Bukkit.getOnlinePlayers().size()) {
+        if (BungeeMode.getMode() == BungeeMode.OFF) {
 
-            Bukkit.broadcastMessage(TextUtils.formatText("&aPlayer " + e.getPlayer().getDisplayName() + " &ahas joined! (" + Bukkit.getOnlinePlayers().size() + "/" + constants.playerLimit + ")"));
+            if (config.getString("lobby.worldName").equalsIgnoreCase(e.getPlayer().getWorld().getName())) { //if is lobby world
 
-            if (constants.lobbyCountDown > 0) {
+                if (config.getInt("players.limit") >= Bukkit.getOnlinePlayers().size()) { //if the player limit has not been reached yet
 
-                GameManager.start(() -> {
+                    e.setJoinMessage(TextUtils.formatText("&a" + e.getPlayer().getDisplayName() + " &ahas joined! (" + Bukkit.getOnlinePlayers().size() + "/" + config.getInt("players.limit") + ")"));
 
-                    for (int i = 0; i < constants.lobbyCountDown; i++) {
+                    if (config.getInt("players.toStart") <= Bukkit.getOnlinePlayers().size()) { //if enough players to start
 
-                        final int j = i;
+                        if (config.getInt("lobby.countdown") > 0) { //if there is a countdown
 
-                        task = plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                            //starts the game with countdown
 
-                            new Title(TextUtils.formatText("&0"), TextUtils.formatText("&aGame starting in: " + (constants.lobbyCountDown - j)), 0, 1, 0).broadcast();
+                            GameManager.start(() -> {
 
-                            if (!isEnoughPlayers && task != null) {
+                                for (int i = 0; i < config.getInt("lobby.countdown"); i++) {
 
-                                int playersNeeded = constants.playersToStart - Bukkit.getOnlinePlayers().size();
+                                    final int j = i;
 
-                                Bukkit.broadcastMessage(TextUtils.formatText("&cCountdown cancelled! Waiting for &7" + ((playersNeeded == 1 ? "1 &cmore player." : playersNeeded + " &cmore players."))));
-                                task.cancel();
+                                    task = plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
 
-                            }
+                                        playersNeeded = config.getInt("players.toStart") - Bukkit.getOnlinePlayers().size();
+                                        isEnoughPlayers = playersNeeded <= 0;
 
-                        }, i * 20);
+                                        if (!isEnoughPlayers && task != null) { //if not enough players and task is null
 
-                        if ((constants.lobbyCountDown - j) == 1)
-                            Bukkit.broadcastMessage("Starting...");
+                                            Bukkit.broadcastMessage(TextUtils.formatText("&cCountdown cancelled! Waiting for &7" + ((playersNeeded == 1 ? "1 &cmore player." : playersNeeded + " &cmore players."))));
+                                            GameState.setGameState(GameState.LOBBY);
+                                            Bukkit.getScheduler().cancelTasks(plugin);
+
+                                        } else if ((config.getInt("lobby.countdown") - j) == 1) {
+
+                                            Bukkit.broadcastMessage(TextUtils.formatText("&aStarting..."));
+                                            GameState.setGameState(GameState.PLAYING);
+
+                                            GameManager.createTeams();
+                                            GameManager.sendTeamsToSpawn(Bukkit.getWorld(config.getString("game.worldName")), config.getStringList("spawnLocations.blueTeam"), config.getStringList("spawnLocations.redTeam"));
+
+                                        } else {
+
+                                            new Title(TextUtils.formatText("&0"), TextUtils.formatText("&aGame starting in &a&l" + (config.getInt("lobby.countdown") - j)), 1, 1, 1).broadcast();
+                                            GameState.setGameState(GameState.STARTING);
+
+                                        }
+
+                                    }, i * 20);
+
+                                }
+
+                            });
+
+                        } else {
+
+                            //starts the game with no countdown
+                            GameState.setGameState(GameState.PLAYING);
+
+                            GameManager.createTeams();
+                            GameManager.sendTeamsToSpawn(Bukkit.getWorld(config.getString("game.worldName")), config.getStringList("spawnLocations.blueTeam"), config.getStringList("spawnLocations.redTeam"));
+
+                        }
 
                     }
 
-                });
+                } else {
 
-            } else {
+                    //put player back to where they came from
+                    e.getPlayer().kickPlayer(TextUtils.formatText("&cThis lobby is currently full!"));
 
-                //just start the game already!
+                }
+
+            } else if (config.getString("game.worldName").equalsIgnoreCase(e.getPlayer().getWorld().getName())) {
+
+                if (!GameManager.woolSet) { //if wool has not been placed
+
+                    GameManager.woolSet = true;
+                    Location blueWoolLoc = TextUtils.parseLocation(config.getString("game.blueWoolLocation"));
+                    Location redWoolLoc = TextUtils.parseLocation(config.getString("game.redWoolLocation"));
+
+                    blueWoolLoc.getBlock().getState().setData(new MaterialData(Material.WOOL, (byte) 11));
+                    redWoolLoc.getBlock().getState().setData(new MaterialData(Material.WOOL, (byte) 14));
+
+                }
 
             }
+
+        } else {
+
+            if (e.getPlayer().hasPermission("ctw.bungeemode"))
+                Bukkit.broadcastMessage(TextUtils.formatText("&aServer running in &7BungeeMode&a, please change make your changes and set 'bungeemode' to off in the config when finished."));
+            else
+                e.getPlayer().kickPlayer(TextUtils.formatText("&cThis mini-game is currently under maintenance."));
 
         }
 
@@ -95,10 +154,9 @@ public class PlayerJoinListener implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent e) {
 
-        if (constants.lobbyWorldFolderPath.split("/")[1].equalsIgnoreCase(e.getPlayer().getWorld().getName())) {
+        if (config.getString("lobby.worldName").equalsIgnoreCase(e.getPlayer().getWorld().getName())) {
 
-            isEnoughPlayers = e.getPlayer().getWorld().getPlayers().size() >= constants.playersToStart;
-            Bukkit.broadcastMessage(TextUtils.formatText("&cPlayer " + e.getPlayer().getDisplayName() + " &ahas left! (" + (Bukkit.getOnlinePlayers().size() - 1) + "/" + constants.playerLimit + ")"));
+            e.setQuitMessage(TextUtils.formatText("&c" + e.getPlayer().getDisplayName() + " &ahas left! (" + (Bukkit.getOnlinePlayers().size() - 1) + "/" + config.getInt("players.limit") + ")"));
 
         }
 

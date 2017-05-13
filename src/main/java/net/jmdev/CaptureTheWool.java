@@ -1,10 +1,12 @@
 package net.jmdev;
 
+import net.jmdev.core.BungeeMode;
 import net.jmdev.database.CoinsDatabase;
 import net.jmdev.listener.PlayerJoinListener;
 
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.io.File;
 
 /*************************************************************************
  *
@@ -26,20 +28,24 @@ import org.bukkit.plugin.java.JavaPlugin;
  */
 public class CaptureTheWool extends JavaPlugin {
 
-    public static YamlConfiguration coinsDatabase;
+    public static CoinsDatabase coinsDatabase;
 
     @Override
     public void onEnable() {
 
-        boolean configNull = getConfig() == null;
+        File f = new File("plugins/CaptureTheWool/config.yml");
 
-        if (configNull)
+        if (!f.exists()) {
             saveDefaultConfig();
-        else
             reloadConfig();
+        } else {
+            reloadConfig();
+        }
 
-        new CoinsDatabase().reload();
+        coinsDatabase = new CoinsDatabase();
+        coinsDatabase.reload();
 
+        BungeeMode.setMode(getConfig().getBoolean("bungeemode") ? BungeeMode.ON : BungeeMode.OFF);
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
 
     }
