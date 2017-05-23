@@ -1,51 +1,80 @@
-#BUNGEEMODE
+# BUNGEEMODE
 bungeeMode: true
 
-#GAME WORLD INFO
+# GAME WORLD INFO
 game:
  worldName: "gameWorld"
  worldFolderPath: "server/gameWorld"
  redWoolLocation: ""
  blueWoolLocation: ""
 
-#LOBBY
+# LOBBY
 lobby:
  worldName: "lobby"
  worldFolderPath: "server/lobby"
  spawnLocation: "lobby,x,y,z,y,p"
  countdown: 10
 
-#TEAMS
+ # REGIONS
+ region:
+  coarseDirt: # region selection
+   - "gameWorld,x,y,z"
+   - "gameWorld,x1,y1,z1"
+  redWoolCapture: # region selection
+   - "gameWorld,x,y,z"
+   - "gameWorld,x1,y1,z1"
+  blueWoolCapture: # region selection
+   - "gameWorld,x,y,z"
+   - "gameWorld,x1,y1,z1"
+
+# SPAWN CHANCE
+coarseDirtChance: 5
+
+# TEAMS
 spawnLocations:
  redTeam:
    - "gameWorld,x,y,z,y,p"
  blueTeam:
    - "gameWorld,x,y,z,y,p"
 
-#PLAYER REQUIREMENTS (toStart = players needed to start | limit = maxPlayers allowed.)
+# PLAYER REQUIREMENTS (toStart = players needed to start | limit = maxPlayers allowed.)
 players:
  toStart: 2
  limit: 4
 
-#COINS
+# COINS
 coins:
  perKill: 5
  perCoarseDirt: 5
+ capture: 10
 
-#CHANCES - (%PERCENTAGE%)
+# CHANCES - (%PERCENTAGE%)
 chances:
  coinsCoarseDirt: 25
 
-#PRICES (ITEM:PRICE:INV_SLOT)
-shopItems: ["barrier:*:0", "stone_spade:100:2", "iron_spade:250:4", "diamond_spade:500:6", "barrier:*:0"]
+# PRICES (ITEM:PRICE:INV_SLOT)
+shopItems:
+ - "barrier:*:0"
+ - "stone_spade:100:2"
+ - "iron_spade:250:4"
+ - "diamond_spade:500:6"
+ - "barrier:*:8"
 
-#GAME RULES (ALL TIMES ARE IN SECONDS)
-gameRules: {woolLimit: 2, deathFreezeTime: 5}
+# GAME RULES (ALL TIMES ARE IN SECONDS)
+gameRules:
+ woolLimit: 2
+ deathFreezeTime: 5
+ maxGameTime: 600
+ timeLeftInterval: 60
 
-#MESSAGES
-messages: {woolTaken: "{teamColor} wool has been taken!", woolDropped: "{woolColor}", woolCaptured: "{woolColor} has been captured!"}
+# MESSAGES
+messages:
+ woolTaken: "{teamColor} wool has been taken!"
+ woolDropped: "{woolColor}"
+ woolCaptured: "{woolColor} has been captured!"
+ timeLeft: "&7{time} &e{timeUnit} remaining!"
 
-#SCOREBOARD
+#S COREBOARD
 scoreboard:
  - "&cYOUR TITLE"
  - "Team"
@@ -53,4 +82,4 @@ scoreboard:
  - "Wool"
  - "{woolStatus}"
  - "Wools Captured"
- - "{redCaptured}/{blueCaptured}"
+ - "&c{redCaptured}&f/&9{blueCaptured}"

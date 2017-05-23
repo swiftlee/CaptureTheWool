@@ -4,7 +4,16 @@ version: 1.0
 description: Single-server Capture The Wool Minigame.
 author: SwiftLee
 
+commands:
+ ctw:
+  usage: /<command>
+  description: "Base command for setwool and setspawn."
+
 permissions:
- ctw.bungeemode:
-  description: "Players with permission can join the server when BungeeMode is ON."
-  default: op
+ ctw:
+  bungeemode:
+   description: "Players with permission can join the server when BungeeMode is ON."
+   default: op
+  cmd:
+   description: "Players with permission can execute the 'ctw' commands."
+   default: op

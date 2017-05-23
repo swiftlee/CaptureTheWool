@@ -1,8 +1,14 @@
 package net.jmdev;
 
+import net.jmdev.command.CommandCTW;
 import net.jmdev.core.BungeeMode;
-import net.jmdev.database.CoinsDatabase;
+import net.jmdev.database.CoarseDirtDatabase;
+import net.jmdev.listener.FoodLevelChangeListener;
+import net.jmdev.listener.InventoryClickListener;
+import net.jmdev.listener.PlayerDamageListener;
+import net.jmdev.listener.PlayerInteractListener;
 import net.jmdev.listener.PlayerJoinListener;
+import net.jmdev.util.TextUtils;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -28,31 +34,34 @@ import java.io.File;
  */
 public class CaptureTheWool extends JavaPlugin {
 
-    public static CoinsDatabase coinsDatabase;
-
     @Override
     public void onEnable() {
 
         File f = new File("plugins/CaptureTheWool/config.yml");
 
         if (!f.exists()) {
+
             saveDefaultConfig();
-            reloadConfig();
+
         } else {
+
             reloadConfig();
+
         }
 
-        coinsDatabase = new CoinsDatabase();
-        coinsDatabase.reload();
+        CoarseDirtDatabase database = new CoarseDirtDatabase();
+        database.load();
 
-        BungeeMode.setMode(getConfig().getBoolean("bungeemode") ? BungeeMode.ON : BungeeMode.OFF);
+        BungeeMode.setMode(getConfig().getBoolean("bungeeMode") ? BungeeMode.ON : BungeeMode.OFF);
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
+        getServer().getPluginManager().registerEvents(new FoodLevelChangeListener(), this);
+        getServer().getPluginManager().registerEvents(new InventoryClickListener(this), this);
+        getServer().getPluginManager().registerEvents(new PlayerInteractListener(this), this);
+        getServer().getPluginManager().registerEvents(new PlayerDamageListener(this), this);
+        getServer().getPluginCommand("ctw").setExecutor(new CommandCTW(this));
 
-    }
-
-    @Override
-    public void onDisable() {
-
+        if (BungeeMode.getMode() == BungeeMode.ON)
+            System.out.print(TextUtils.formatText("BungeeMode is ON. Please restart your server and set BungeeMode to 'false' in the config when you are finished making changes."));
 
     }
 

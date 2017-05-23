@@ -1,11 +1,24 @@
 package net.jmdev.core;
 
+import net.jmdev.CaptureTheWool;
+import net.jmdev.database.CoarseDirtDatabase;
+import net.jmdev.util.TextUtils;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
+import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.material.MaterialData;
+import org.bukkit.util.Vector;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -33,7 +46,12 @@ public class GameManager {
     public static List<Player> blueTeam;
     public static List<Player> redTeam;
     public static boolean teamsSet;
-    public static boolean woolSet;
+    public static boolean woolSet = false;
+    public static int redCaptured = 0;
+    public static int blueCaptured = 0;
+    static CoarseDirtDatabase database = new CoarseDirtDatabase();
+    static int totalTimeLeft;
+    static short intervalCounter;
 
     /**
      * @param gameStart - functional interface used to call the start method using lambda
@@ -54,7 +72,8 @@ public class GameManager {
     public static void createTeams() {
 
         ArrayList<Player> blueTeam = new ArrayList<>(), redTeam = new ArrayList<>();
-        ArrayList<Player> onlinePlayers = (ArrayList<Player>) Bukkit.getOnlinePlayers();
+        ArrayList<Player> onlinePlayers = new ArrayList<>();
+        onlinePlayers.addAll(Bukkit.getOnlinePlayers());
 
         for (int i = 0; i < Math.ceil((double) onlinePlayers.size() / 2); i++) {
 
@@ -64,14 +83,24 @@ public class GameManager {
 
         int counter = 0;
 
-        for (Player p : onlinePlayers) {
+        for (Player p : Bukkit.getOnlinePlayers()) {
 
-            if (p.getUniqueId() != blueTeam.get(counter).getUniqueId()) {
+            try {
 
-                redTeam.add(blueTeam.get(counter));
+                if (p.getUniqueId() == blueTeam.get(counter).getUniqueId()) {
 
-                if (redTeam.size() == Math.floor(onlinePlayers.size() / 2))
+                    onlinePlayers.remove(counter);
+
+                }
+
+            } catch (IndexOutOfBoundsException e) {
+
+                if (onlinePlayers.size() == Math.floor(Bukkit.getOnlinePlayers().size() / 2)) {
+
+                    redTeam.addAll(onlinePlayers);
                     break;
+
+                }
 
             }
 
@@ -97,8 +126,18 @@ public class GameManager {
 
         if (teamsSet) {
 
-            String blueTeamLocation = blueTeamLocations.get(new Random().nextInt(blueTeamLocations.size() - 1));
-            String redTeamLocation = redTeamLocations.get(new Random().nextInt(redTeamLocations.size() - 1));
+            String blueTeamLocation;
+            String redTeamLocation;
+
+            if (blueTeamLocations.size() == 1)
+                blueTeamLocation = blueTeamLocations.get(0);
+            else
+                blueTeamLocation = blueTeamLocations.get(new Random().nextInt(blueTeamLocations.size() - 1));
+
+            if (redTeamLocations.size() == 1)
+                redTeamLocation = redTeamLocations.get(0);
+            else
+                redTeamLocation = redTeamLocations.get(new Random().nextInt(redTeamLocations.size() - 1));
 
             double x;
             double y;
@@ -109,11 +148,11 @@ public class GameManager {
 
             for (Player p : blueTeam) {
 
-                x = Double.valueOf(blueTeamLocation.split(",")[0]);
-                y = Double.valueOf(blueTeamLocation.split(",")[1]);
-                z = Double.valueOf(blueTeamLocation.split(",")[2]);
-                yaw = Float.valueOf(blueTeamLocation.split(",")[3]);
-                pit = Float.valueOf(blueTeamLocation.split(",")[4]);
+                x = Double.valueOf(blueTeamLocation.split(",")[1]);
+                y = Double.valueOf(blueTeamLocation.split(",")[2]);
+                z = Double.valueOf(blueTeamLocation.split(",")[3]);
+                yaw = Float.valueOf(blueTeamLocation.split(",")[4]);
+                pit = Float.valueOf(blueTeamLocation.split(",")[5]);
 
                 loc = new Location(gameWorld, x, y, z, yaw, pit);
                 p.teleport(loc, PlayerTeleportEvent.TeleportCause.PLUGIN);
@@ -122,11 +161,11 @@ public class GameManager {
 
             for (Player p : redTeam) {
 
-                x = Double.valueOf(redTeamLocation.split(",")[0]);
-                y = Double.valueOf(redTeamLocation.split(",")[1]);
-                z = Double.valueOf(redTeamLocation.split(",")[2]);
-                yaw = Float.valueOf(redTeamLocation.split(",")[3]);
-                pit = Float.valueOf(redTeamLocation.split(",")[4]);
+                x = Double.valueOf(redTeamLocation.split(",")[1]);
+                y = Double.valueOf(redTeamLocation.split(",")[2]);
+                z = Double.valueOf(redTeamLocation.split(",")[3]);
+                yaw = Float.valueOf(redTeamLocation.split(",")[4]);
+                pit = Float.valueOf(redTeamLocation.split(",")[5]);
 
                 loc = new Location(gameWorld, x, y, z, yaw, pit);
                 p.teleport(loc, PlayerTeleportEvent.TeleportCause.PLUGIN);
@@ -137,4 +176,97 @@ public class GameManager {
 
     }
 
+    public static void startGameCountdown(CaptureTheWool plugin) {
+
+        final int maxGameTime = plugin.getConfig().getInt("maxGameTime");
+        totalTimeLeft = plugin.getConfig().getInt("maxGameTime");
+
+        final int interval = plugin.getConfig().getInt("timeLeftInterval");
+        intervalCounter = 1;
+
+        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
+
+            totalTimeLeft--;
+
+            if (maxGameTime - (interval * intervalCounter) == totalTimeLeft) {
+
+                Bukkit.broadcastMessage(TextUtils.formatText(plugin.getConfig().getString("messages.timeLeft").replace("{time}", TextUtils.formatTime(totalTimeLeft)).replace("{timeUnit}", TextUtils.getTimeUnit(totalTimeLeft))));
+                intervalCounter++;
+
+            }
+
+        }, 0L, 20L);
+
+    }
+
+    public static void saveCoarseBlocksAndReplace(CaptureTheWool plugin) {
+
+        FileConfiguration config = plugin.getConfig();
+
+        String gameWorld = config.getString("game.worldName");
+
+        Location loc1 = TextUtils.parseLocation(config.getStringList("region.coarseDirt").get(0));
+        Location loc2 = TextUtils.parseLocation(config.getStringList("region.coarseDirt").get(1));
+
+        Vector max = Vector.getMaximum(loc1.toVector(), loc2.toVector());
+        Vector min = Vector.getMinimum(loc1.toVector(), loc2.toVector());
+
+        boolean dbLoaded;
+
+        try {
+
+            database.getYML().load("plugins/CaptureTheWool/dirtDatabase.yml");
+            dbLoaded = true;
+
+        } catch (InvalidConfigurationException e) {
+            e.printStackTrace();
+            dbLoaded = false;
+        } catch (FileNotFoundException e) {
+            dbLoaded = false;
+        } catch (IOException e) {
+            e.printStackTrace();
+            dbLoaded = false;
+        }
+
+        ArrayList<String> locList = database.getYML().getStringList("locations") == null ? new ArrayList<>() : (ArrayList<String>) database.getYML().getStringList("locations");
+
+        if (dbLoaded) {
+
+            locList.stream().forEach(location -> {
+
+                Block b = TextUtils.parseLocation(location).getBlock();
+                BlockState state = b.getState();
+                state.setType(Material.DIRT);
+                state.setData(new MaterialData(Material.DIRT, (byte) 1));
+                state.update(true, false);
+
+            });
+
+
+        } else {
+
+            for (int i = min.getBlockX(); i <= max.getBlockX(); i++) { //loop through x
+                for (int j = min.getBlockY(); j <= max.getBlockY(); j++) { //loop through y
+                    for (int k = min.getBlockZ(); k <= max.getBlockZ(); k++) { //loop through z
+                        if (new Random().nextInt(100) <= config.getInt("coarseDirtChance")) {
+
+                            Block block = Bukkit.getServer().getWorld(gameWorld).getBlockAt(i, j, k);
+                            database.addNewLocation(TextUtils.locationToString(block.getLocation(), false), locList, max.getBlockX() + max.getBlockY() + max.getBlockZ(), i + j + k);
+
+                            BlockState state = block.getState();
+                            state.setType(Material.DIRT);
+                            state.setData(new MaterialData(Material.DIRT, (byte) 1));
+                            state.update(true, false);
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
 }
