@@ -52,12 +52,13 @@ import java.util.List;
  */
 public class PlayerJoinListener implements Listener {
 
+    static CoarseDirtDatabase database;
+    private static boolean hasGenerated = false;
     private CaptureTheWool plugin;
     private FileConfiguration config;
     private boolean isEnoughPlayers = true;
     private BukkitTask task;
     private int playersNeeded;
-
     private Material helmet = Material.IRON_HELMET;
     private Material chestplate = Material.IRON_CHESTPLATE;
     private Material leggings = Material.IRON_LEGGINGS;
@@ -67,8 +68,6 @@ public class PlayerJoinListener implements Listener {
     private Material bow = Material.BOW;
     private Material arrow = Material.ARROW;
     private Material chest = Material.CHEST;
-
-    static CoarseDirtDatabase database;
 
     public PlayerJoinListener(CaptureTheWool plugin) {
 
@@ -81,7 +80,7 @@ public class PlayerJoinListener implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent e) {
 
-        if (!(GameState.getGameState() == GameState.PLAYING) || !(GameState.getGameState() == GameState.FINISHED)) {
+        if (GameState.getGameState() != GameState.PLAYING && GameState.getGameState() != GameState.FINISHED) {
 
             if (BungeeMode.getMode() == BungeeMode.OFF) {
 
@@ -101,55 +100,56 @@ public class PlayerJoinListener implements Listener {
 
                                 //starts the game with countdown
 
-                                GameManager.start(() -> {
+                                if (GameState.getGameState() == GameState.LOBBY) {
 
-                                    for (int i = 0; i < config.getInt("lobby.countdown"); i++) {
+                                    GameManager.start(() -> {
 
-                                        final int j = i;
+                                        for (int i = 0; i < config.getInt("lobby.countdown"); i++) {
 
-                                        task = plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                                            final int j = i;
 
-                                            playersNeeded = config.getInt("players.toStart") - Bukkit.getOnlinePlayers().size();
-                                            isEnoughPlayers = playersNeeded <= 0;
+                                            task = plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
 
-                                            if (!isEnoughPlayers && task != null) { //if not enough players and task is null
+                                                playersNeeded = config.getInt("players.toStart") - Bukkit.getOnlinePlayers().size();
+                                                isEnoughPlayers = playersNeeded <= 0;
 
-                                                Bukkit.broadcastMessage(TextUtils.formatText("&cCountdown cancelled! Waiting for &7" + ((playersNeeded == 1 ? "1 &cmore player." : playersNeeded + " &cmore players."))));
-                                                GameState.setGameState(GameState.LOBBY);
-                                                Bukkit.getScheduler().cancelTasks(plugin);
+                                                if (!isEnoughPlayers && task != null) { //if not enough players and task is null
 
-                                            } else if ((config.getInt("lobby.countdown") - j) == 1) {
+                                                    Bukkit.broadcastMessage(TextUtils.formatText("&cCountdown cancelled! Waiting for &7" + ((playersNeeded == 1 ? "1 &cmore player." : playersNeeded + " &cmore players."))));
+                                                    GameState.setGameState(GameState.LOBBY);
+                                                    Bukkit.getScheduler().cancelTasks(plugin);
 
-                                                Bukkit.broadcastMessage(TextUtils.formatText("&aStarting..."));
-                                                GameState.setGameState(GameState.PLAYING);
+                                                } else if ((config.getInt("lobby.countdown") - j) == 1) {
 
-                                                GameManager.createTeams();
-                                                WoolStatus.setBlueStatus(WoolStatus.IN_SPAWN);
-                                                WoolStatus.setRedStatus(WoolStatus.IN_SPAWN);
-                                                GameManager.sendTeamsToSpawn(Bukkit.getWorld(config.getString("game.worldName")), config.getStringList("spawnLocations.blueTeam"), config.getStringList("spawnLocations.redTeam"));
+                                                    Bukkit.broadcastMessage(TextUtils.formatText("&aStarting..."));
 
-                                            } else {
+                                                    GameManager.createTeams();
+                                                    WoolStatus.setBlueStatus(WoolStatus.IN_SPAWN);
+                                                    WoolStatus.setRedStatus(WoolStatus.IN_SPAWN);
+                                                    GameManager.sendTeamsToSpawn(config.getStringList("spawnLocations.blueTeam"), config.getStringList("spawnLocations.redTeam"));
 
-                                                new Title(TextUtils.formatText("&0"), TextUtils.formatText("&aGame starting in &a&l" + (config.getInt("lobby.countdown") - j)), 1, 1, 1).broadcast();
-                                                GameState.setGameState(GameState.STARTING);
+                                                } else {
 
-                                            }
+                                                    new Title(TextUtils.formatText("&0"), TextUtils.formatText("&aGame starting in &a&l" + (config.getInt("lobby.countdown") - j)), 1, 1, 1).broadcast();
+                                                    GameState.setGameState(GameState.STARTING);
 
-                                        }, i * 20);
+                                                }
 
-                                    }
+                                            }, i * 20);
 
-                                });
+                                        }
+
+                                    });
+
+                                }
 
                             } else {
 
                                 //starts the game with no countdown
-                                GameState.setGameState(GameState.PLAYING);
-
                                 GameManager.createTeams();
                                 WoolStatus.setBlueStatus(WoolStatus.IN_SPAWN);
                                 WoolStatus.setRedStatus(WoolStatus.IN_SPAWN);
-                                GameManager.sendTeamsToSpawn(Bukkit.getWorld(config.getString("game.worldName")), config.getStringList("spawnLocations.blueTeam"), config.getStringList("spawnLocations.redTeam"));
+                                GameManager.sendTeamsToSpawn(config.getStringList("spawnLocations.blueTeam"), config.getStringList("spawnLocations.redTeam"));
 
                             }
 
@@ -186,7 +186,21 @@ public class PlayerJoinListener implements Listener {
 
         if (config.getString("lobby.worldName").equalsIgnoreCase(e.getPlayer().getWorld().getName())) {
 
-            e.setQuitMessage(TextUtils.formatText("&c" + e.getPlayer().getDisplayName() + " &ahas left! (" + (Bukkit.getOnlinePlayers().size() - 1) + "/" + config.getInt("players.limit") + ")"));
+            if (GameState.getGameState() != GameState.PLAYING)
+                e.setQuitMessage(TextUtils.formatText("&c" + e.getPlayer().getDisplayName() + " &ahas left! (" + (Bukkit.getOnlinePlayers().size() - 1) + "/" + config.getInt("players.limit") + ")"));
+            if (e.getPlayer().getScoreboard().getTeam("Blue") != null) {
+
+                e.setQuitMessage(TextUtils.formatText("&9" + e.getPlayer().getDisplayName() + " &7has left!"));
+                e.getPlayer().setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
+                GameManager.blueTeam.remove(e.getPlayer().getUniqueId());
+
+            } else if (e.getPlayer().getScoreboard().getTeam("Red") != null) {
+
+                e.setQuitMessage(TextUtils.formatText("&c" + e.getPlayer().getDisplayName() + " &7has left!"));
+                e.getPlayer().setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
+                GameManager.redTeam.remove(e.getPlayer().getUniqueId());
+
+            }
 
         }
 
@@ -199,6 +213,8 @@ public class PlayerJoinListener implements Listener {
 
             if (config.getString("lobby.worldName").equalsIgnoreCase(e.getFrom().getName())) {
 
+                GameState.setGameState(GameState.PLAYING);
+
                 if (!GameManager.woolSet) { //if wool has not been placed
 
                     GameManager.woolSet = true;
@@ -208,44 +224,58 @@ public class PlayerJoinListener implements Listener {
                     BlockState blueState = blueWoolLoc.getBlock().getState();
                     BlockState redState = redWoolLoc.getBlock().getState();
 
-                    blueState.setType(Material.WOOL);
-                    redState.setType(Material.WOOL);
-                    blueState.setData(new MaterialData(Material.WOOL, (byte) 11));
-                    redState.setData(new MaterialData(Material.WOOL, (byte) 14));
-                    blueState.update(true, false);
-                    redState.update(true, false);
+                    if (hasGenerated == false) {
 
-                    ItemStack chestStack = new ItemStack(chest);
-                    ItemMeta meta = chestStack.getItemMeta();
-                    meta.setDisplayName(TextUtils.formatText("&e&lShop"));
+                        GameScoreboard.setupGameScoreboard(plugin); //sets up scoreboard for all team players
+                        GameManager.startGameCountdown(plugin); //start the game countdown in chat
 
-                    List<String> lore = new ArrayList<>();
-                    lore.add(TextUtils.formatText("&eBuy all of your shovels here!"));
+                        blueState.setType(Material.WOOL);
+                        redState.setType(Material.WOOL);
+                        blueState.setData(new MaterialData(Material.WOOL, (byte) 11));
+                        redState.setData(new MaterialData(Material.WOOL, (byte) 14));
+                        blueState.update(true, false);
+                        redState.update(true, false);
 
-                    meta.setLore(lore);
-                    chestStack.setItemMeta(meta);
+                        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
 
-                    for (Player p : Bukkit.getOnlinePlayers()) {
+                            GameManager.saveCoarseBlocksAndReplace(plugin);
+                            Bukkit.broadcastMessage(TextUtils.formatText("&aCoarse dirt has generated!"));
 
-                        ItemStack bowItemStack = ItemHandler.createUnbreakable(bow);
-                        bowItemStack.addEnchantment(Enchantment.ARROW_INFINITE, 1);
+                        }, 0, config.getInt("time.dirtRegen") * 20);
 
-                        p.getInventory().clear();
-                        p.getInventory().setHelmet(ItemHandler.createUnbreakable(helmet));
-                        p.getInventory().setChestplate(ItemHandler.createUnbreakable(chestplate));
-                        p.getInventory().setLeggings(ItemHandler.createUnbreakable(leggings));
-                        p.getInventory().setBoots(ItemHandler.createUnbreakable(boots));
-                        p.getInventory().setItem(0, ItemHandler.createUnbreakable(sword));
-                        p.getInventory().setItem(1, ItemHandler.createUnbreakable(shovel));
-                        p.getInventory().setItem(2, bowItemStack);
-                        p.getInventory().setItem(3, new ItemStack(arrow));
-                        p.getInventory().setItem(8, chestStack);
+                        ItemStack chestStack = new ItemStack(chest);
+                        ItemMeta meta = chestStack.getItemMeta();
+                        meta.setDisplayName(TextUtils.formatText("&e&lShop"));
 
+                        List<String> lore = new ArrayList<>();
+                        lore.add(TextUtils.formatText("&eBuy all of your shovels here!"));
+
+                        meta.setLore(lore);
+                        chestStack.setItemMeta(meta);
+
+                        for (Player p : Bukkit.getOnlinePlayers()) {
+                            ItemStack bowItemStack = ItemHandler.createUnbreakable(bow);
+                            bowItemStack.addEnchantment(Enchantment.ARROW_INFINITE, 1);
+
+                            p.getInventory().clear();
+                            p.getInventory().setHelmet(ItemHandler.createUnbreakable(helmet));
+                            p.getInventory().setChestplate(ItemHandler.createUnbreakable(chestplate));
+                            p.getInventory().setLeggings(ItemHandler.createUnbreakable(leggings));
+                            p.getInventory().setBoots(ItemHandler.createUnbreakable(boots));
+                            p.getInventory().setItem(0, ItemHandler.createUnbreakable(sword));
+                            p.getInventory().setItem(1, ItemHandler.createUnbreakable(shovel));
+                            p.getInventory().setItem(2, bowItemStack);
+                            p.getInventory().setItem(3, new ItemStack(arrow));
+                            p.getInventory().setItem(8, chestStack);
+
+                        }
+
+                        hasGenerated = true;
                     }
 
+
+                    e.getPlayer().setLevel(0);
                     e.getPlayer().setExp(0);
-                    GameScoreboard.setupGameScoreboard(plugin); //sets up scoreboard for all team players
-                    GameManager.startGameCountdown(plugin); //start the game countdown in chat
 
                 }
 

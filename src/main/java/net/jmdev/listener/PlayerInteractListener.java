@@ -62,7 +62,7 @@ public class PlayerInteractListener implements Listener {
     public void onBlockPlace(BlockPlaceEvent e) {
 
         if (BungeeMode.getMode() == BungeeMode.OFF)
-        e.setCancelled(true);
+            e.setCancelled(true);
 
     }
 
@@ -70,7 +70,7 @@ public class PlayerInteractListener implements Listener {
     public void onPlayerDropItem(PlayerDropItemEvent e) {
 
         if (BungeeMode.getMode() == BungeeMode.OFF)
-        e.setCancelled(true);
+            e.setCancelled(true);
 
     }
 

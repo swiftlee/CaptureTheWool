@@ -1,6 +1,7 @@
 package net.jmdev.listener;
 
 import net.jmdev.CaptureTheWool;
+import net.jmdev.core.ItemHandler;
 import net.jmdev.util.TextUtils;
 
 import org.bukkit.Material;
@@ -56,13 +57,42 @@ public class InventoryClickListener implements Listener {
 
                 if (stack.getTag().get("price") != null) {
 
-                    if ((int) Math.floor(p.getExp()) >= stack.getTag().getInt("price")) {
+                    if (p.getLevel() >= stack.getTag().getInt("price")) {
 
-                        p.setExp(p.getExp() - stack.getTag().getInt("price"));
+                        p.setLevel(p.getLevel() - stack.getTag().getInt("price"));
+
+                        if (bukkitStack.getType().toString().split("_")[1] != null) {
+
+                            if (bukkitStack.getType().toString().split("_")[1].equalsIgnoreCase("SPADE")) {
+
+                                p.getInventory().setItem(1, new ItemStack(ItemHandler.createUnbreakable(bukkitStack.getType())));
+
+                            } else if (bukkitStack.getType().toString().split("_")[1].equalsIgnoreCase("SWORD")) {
+
+                                p.getInventory().setItem(0, new ItemStack(ItemHandler.createUnbreakable(bukkitStack.getType())));
+
+                            } else {
+
+                                p.getInventory().addItem(new ItemStack(ItemHandler.createUnbreakable(bukkitStack.getType())));
+
+                            }
+
+                        } else {
+
+                            if (bukkitStack.getType().toString().equalsIgnoreCase("BOW")) {
+
+                                p.getInventory().setItem(2, new ItemStack(ItemHandler.createUnbreakable(bukkitStack.getType())));
+
+                            } else {
+
+                                p.getInventory().addItem(new ItemStack(ItemHandler.createUnbreakable(bukkitStack.getType())));
+
+                            }
+
+                        }
 
                         p.closeInventory();
-                        p.getInventory().addItem(new ItemStack(bukkitStack.getType()));
-                        p.sendMessage(TextUtils.formatText("&aYour coin balance is now: " + (int) p.getExp()));
+                        p.sendMessage(TextUtils.formatText("&aYour coin balance is now: " + p.getLevel()));
 
                     } else {
 

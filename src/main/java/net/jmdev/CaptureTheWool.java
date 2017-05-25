@@ -2,14 +2,18 @@ package net.jmdev;
 
 import net.jmdev.command.CommandCTW;
 import net.jmdev.core.BungeeMode;
+import net.jmdev.core.GameState;
 import net.jmdev.database.CoarseDirtDatabase;
 import net.jmdev.listener.FoodLevelChangeListener;
 import net.jmdev.listener.InventoryClickListener;
 import net.jmdev.listener.PlayerDamageListener;
 import net.jmdev.listener.PlayerInteractListener;
 import net.jmdev.listener.PlayerJoinListener;
+import net.jmdev.listener.PlayerMoveListener;
 import net.jmdev.util.TextUtils;
 
+import org.bukkit.Bukkit;
+import org.bukkit.WorldCreator;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -52,12 +56,18 @@ public class CaptureTheWool extends JavaPlugin {
         CoarseDirtDatabase database = new CoarseDirtDatabase();
         database.load();
 
+        GameState.setGameState(GameState.LOBBY);
         BungeeMode.setMode(getConfig().getBoolean("bungeeMode") ? BungeeMode.ON : BungeeMode.OFF);
+
+        if (Bukkit.getWorld(getConfig().getString("game.worldName")) == null)
+            Bukkit.createWorld(new WorldCreator(getConfig().getString("game.worldName")));
+
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
         getServer().getPluginManager().registerEvents(new FoodLevelChangeListener(), this);
         getServer().getPluginManager().registerEvents(new InventoryClickListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerInteractListener(this), this);
-        getServer().getPluginManager().registerEvents(new PlayerDamageListener(this), this);
+        Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> Bukkit.getPluginManager().registerEvents(new PlayerMoveListener(this, getConfig()), this), 20 * 5);
+        Bukkit.getServer().getPluginManager().registerEvents(new PlayerDamageListener(this), this);
         getServer().getPluginCommand("ctw").setExecutor(new CommandCTW(this));
 
         if (BungeeMode.getMode() == BungeeMode.ON)

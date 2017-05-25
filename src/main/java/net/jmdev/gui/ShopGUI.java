@@ -42,14 +42,16 @@ public class ShopGUI {
 
             stack = new org.bukkit.inventory.ItemStack(Material.valueOf(s.split(":")[0].toUpperCase()));
 
-            if (!s.split(":")[1].equalsIgnoreCase("*"))
-                stack = ItemHandler.addNBTIntTag(stack, "price", Integer.valueOf(s.split(":")[1]));
+            if (!s.split(":")[1].equalsIgnoreCase("*")) {
 
-            ItemMeta meta = stack.getItemMeta();
-            List<String> lore = new ArrayList<>();
-            lore.add(TextUtils.formatText("&ePrice: &6$" + Integer.valueOf(s.split(":")[1])));
-            meta.setLore(lore);
-            stack.setItemMeta(meta);
+                stack = ItemHandler.addNBTIntTag(stack, "price", Integer.valueOf(s.split(":")[1]));
+                ItemMeta meta = stack.getItemMeta();
+                List<String> lore = new ArrayList<>();
+                lore.add(TextUtils.formatText("&ePrice: &6$" + Integer.valueOf(s.split(":")[1])));
+                meta.setLore(lore);
+                stack.setItemMeta(meta);
+
+            }
 
             inv.setItem(Integer.valueOf(s.split(":")[2]), stack);
 

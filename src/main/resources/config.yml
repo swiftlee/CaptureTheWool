@@ -15,27 +15,31 @@ lobby:
  spawnLocation: "lobby,x,y,z,y,p"
  countdown: 10
 
+ # TIMES (IN SECONDS)
+time:
+ dirtRegen: 900
+
  # REGIONS
- region:
-  coarseDirt: # region selection
-   - "gameWorld,x,y,z"
-   - "gameWorld,x1,y1,z1"
-  redWoolCapture: # region selection
-   - "gameWorld,x,y,z"
-   - "gameWorld,x1,y1,z1"
-  blueWoolCapture: # region selection
-   - "gameWorld,x,y,z"
-   - "gameWorld,x1,y1,z1"
+region:
+coarseDirt: # region selection
+ - "gameWorld,x,y,z"
+ - "gameWorld,x1,y1,z1"
+redWoolCapture: # region selection
+ - "gameWorld,x,y,z"
+ - "gameWorld,x1,y1,z1"
+blueWoolCapture: # region selection
+ - "gameWorld,x,y,z"
+ - "gameWorld,x1,y1,z1"
 
 # SPAWN CHANCE
-coarseDirtChance: 5
+coarseDirtChance: 10
 
 # TEAMS
 spawnLocations:
  redTeam:
-   - "gameWorld,x,y,z,y,p"
+  - ""
  blueTeam:
-   - "gameWorld,x,y,z,y,p"
+  - ""
 
 # PLAYER REQUIREMENTS (toStart = players needed to start | limit = maxPlayers allowed.)
 players:
@@ -44,9 +48,9 @@ players:
 
 # COINS
 coins:
- perKill: 5
- perCoarseDirt: 5
- capture: 10
+ perKill: 45
+ perCoarseDirt: 35
+ capture: 100
 
 # CHANCES - (%PERCENTAGE%)
 chances:
@@ -69,17 +73,19 @@ gameRules:
 
 # MESSAGES
 messages:
- woolTaken: "{teamColor} wool has been taken!"
- woolDropped: "{woolColor}"
- woolCaptured: "{woolColor} has been captured!"
+ woolTaken: "{woolColor} &7wool has been taken!"
+ woolDropped: "{woolColor} &7wool has been dropped!"
+ woolCaptured: "{woolColor} &7has been captured!"
  timeLeft: "&7{time} &e{timeUnit} remaining!"
 
-#S COREBOARD
+# SCOREBOARD
 scoreboard:
  - "&cYOUR TITLE"
  - "Team"
  - "{teamColor}"
+ - "&c"
  - "Wool"
  - "{woolStatus}"
+ - "&d"
  - "Wools Captured"
  - "&c{redCaptured}&f/&9{blueCaptured}"

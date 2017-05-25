@@ -77,17 +77,11 @@ public class CoarseDirtDatabase {
 
     }
 
-    public void addNewLocation(String loc, ArrayList<String> locList, int blocksToIterate, int currentIteration) {
+    public void addNewLocation(String loc, ArrayList<String> locList) {
 
         locList.add(loc);
-
         dirtDatabase.set("locations", locList);
-
-        if (currentIteration == blocksToIterate) {
-
-            reload();
-
-        }
+        reload();
 
     }
 

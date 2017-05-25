@@ -4,14 +4,13 @@ import net.jmdev.CaptureTheWool;
 import net.jmdev.util.TextUtils;
 
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
 import org.bukkit.scoreboard.Team;
 
-import java.util.ArrayList;
+import java.util.UUID;
 
 /*************************************************************************
  *
@@ -39,17 +38,17 @@ public class GameScoreboard {
 
     public static void setupGameScoreboard(CaptureTheWool plugin) {
 
-        for (Player p : GameManager.redTeam) {
+        Objective redObjective = redBoard.registerNewObjective("red", "dummy");
+        redObjective.setDisplaySlot(DisplaySlot.SIDEBAR);
+        redObjective.setDisplayName(TextUtils.formatText(plugin.getConfig().getStringList("scoreboard").get(0)));
 
-            Team redTeam = redBoard.registerNewTeam("Red");
-            redTeam.setPrefix(TextUtils.formatText("&c&lRed &r"));
-            redTeam.setAllowFriendlyFire(false);
-            redTeam.addEntry(p.getName());
+        Team redTeam = redBoard.registerNewTeam("Red");
+        redTeam.setPrefix(TextUtils.formatText("&c&lRed &r"));
+        redTeam.setAllowFriendlyFire(false);
 
-            Objective redObjective = redBoard.registerNewObjective(p.getName(), "dummy");
+        for (UUID p : GameManager.redTeam) {
 
-            redObjective.setDisplaySlot(DisplaySlot.SIDEBAR);
-            redObjective.setDisplayName(TextUtils.formatText(plugin.getConfig().getStringList("scoreboard").get(0)));
+            redTeam.addEntry(Bukkit.getPlayer(p).getName());
 
             for (int i = 0; i < plugin.getConfig().getStringList("scoreboard").size(); i++) {
 
@@ -60,23 +59,24 @@ public class GameScoreboard {
                 }
 
                 if (i == plugin.getConfig().getStringList("scoreboard").size() - 1)
-                    p.setScoreboard(redBoard);
+                    Bukkit.getPlayer(p).setScoreboard(redBoard);
 
             }
 
         }
 
-        for (Player p : GameManager.blueTeam) {
+        Objective blueObjective = blueBoard.registerNewObjective("blue", "dummy");
 
-            Team blueTeam = blueBoard.registerNewTeam("Blue");
-            blueTeam.setPrefix(TextUtils.formatText("&9&lBlue &r"));
-            blueTeam.setAllowFriendlyFire(false);
-            blueTeam.addEntry(p.getName());
+        blueObjective.setDisplaySlot(DisplaySlot.SIDEBAR);
+        blueObjective.setDisplayName(TextUtils.formatText(plugin.getConfig().getStringList("scoreboard").get(0)));
 
-            Objective blueObjective = blueBoard.registerNewObjective(p.getName(), "dummy");
+        Team blueTeam = blueBoard.registerNewTeam("Blue");
+        blueTeam.setPrefix(TextUtils.formatText("&9&lBlue &r"));
+        blueTeam.setAllowFriendlyFire(false);
 
-            blueObjective.setDisplaySlot(DisplaySlot.SIDEBAR);
-            blueObjective.setDisplayName(TextUtils.formatText(plugin.getConfig().getStringList("scoreboard").get(0)));
+        for (UUID p : GameManager.blueTeam) {
+
+            blueTeam.addEntry(Bukkit.getPlayer(p).getName());
 
             for (int i = 0; i < plugin.getConfig().getStringList("scoreboard").size(); i++) {
 
@@ -87,7 +87,7 @@ public class GameScoreboard {
                 }
 
                 if (i == plugin.getConfig().getStringList("scoreboard").size() - 1)
-                    p.setScoreboard(blueBoard);
+                    Bukkit.getPlayer(p).setScoreboard(blueBoard);
 
             }
 
@@ -95,40 +95,36 @@ public class GameScoreboard {
 
     }
 
-    public static void setWoolStatus(Player player, WoolStatus status) {
+    public static void updateBoard(CaptureTheWool plugin) {
 
-        ArrayList<Team> teams = new ArrayList<>();
-        teams.addAll(blueBoard.getTeams());
+        redBoard.getEntries().stream().forEach(entry -> redBoard.getObjective("red").getScoreboard().resetScores(entry));
+        blueBoard.getEntries().stream().forEach(entry -> blueBoard.getObjective("blue").getScoreboard().resetScores(entry));
 
-        if (teams.get(0).hasEntry(player.getName())) {
+        GameManager.blueTeam.stream().forEach(p -> {
 
-            for (String entry : player.getScoreboard().getEntries()) {
+            for (int i = 1; i < plugin.getConfig().getStringList("scoreboard").size(); i++) {
 
-                if (entry.equalsIgnoreCase(WoolStatus.getBlueStatus().toString())) {
+                blueBoard.getObjective("blue").getScore(TextUtils.formatText(plugin.getConfig().getStringList("scoreboard").get(i).replace("{teamColor}", "&9Blue").replace("{woolStatus}", WoolStatus.getBlueStatus().toString()).replace("{redCaptured}", String.valueOf(GameManager.redCaptured)).replace("{blueCaptured}", String.valueOf(GameManager.blueCaptured)))).setScore(plugin.getConfig().getStringList("scoreboard").size() - i);
 
-                    WoolStatus.setBlueStatus(status);
-                    blueBoard.getObjective(player.getName()).getScore(TextUtils.formatText(WoolStatus.getBlueStatus().toString())).setScore(player.getScoreboard().getObjective(player.getName()).getScore(entry).getScore());
-                    break;
-
-                }
+                if (i == plugin.getConfig().getStringList("scoreboard").size() - 1)
+                    Bukkit.getPlayer(p).setScoreboard(blueBoard);
 
             }
 
-        } else {
+        });
 
-            for (String entry : player.getScoreboard().getEntries()) {
+        GameManager.redTeam.stream().forEach(p -> {
 
-                if (entry.equalsIgnoreCase(WoolStatus.getRedStatus().toString())) {
+            for (int i = 1; i < plugin.getConfig().getStringList("scoreboard").size(); i++) {
 
-                    WoolStatus.setRedStatus(status);
-                    redBoard.getObjective(player.getName()).getScore(TextUtils.formatText(WoolStatus.getRedStatus().toString())).setScore(redBoard.getObjective(player.getName()).getScore(entry).getScore());
-                    break;
+                redBoard.getObjective("red").getScore(TextUtils.formatText(plugin.getConfig().getStringList("scoreboard").get(i).replace("{teamColor}", "&cRed").replace("{woolStatus}", WoolStatus.getRedStatus().toString()).replace("{redCaptured}", String.valueOf(GameManager.redCaptured)).replace("{blueCaptured}", String.valueOf(GameManager.blueCaptured)))).setScore(plugin.getConfig().getStringList("scoreboard").size() - i);
 
-                }
+                if (i == plugin.getConfig().getStringList("scoreboard").size() - 1)
+                    Bukkit.getPlayer(p).setScoreboard(redBoard);
 
             }
 
-        }
+        });
 
     }
 
